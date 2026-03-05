@@ -1,11 +1,14 @@
 import sys
 import os
+
+# Add project root so Python can find /src
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import hashlib
 from pathlib import Path
 import streamlit as st
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+# Now imports from src work
 from src.document_loader import load_documents
 from src.chunker import chunk_text
 from src.embeddings import embed_chunks
@@ -14,6 +17,7 @@ from src.query_embedding import embed_query
 from src.hybrid_retriever import build_bm25, hybrid_retrieve
 from src.rag_pipeline import generate_answer
 from src.eval_grounding import grounding_check
+from src.reranker import rerank
 
 
 st.set_page_config(page_title="Enterprise RAG Assistant", layout="wide")
@@ -153,16 +157,17 @@ if prompt:
             q_emb = embed_query(prompt)
 
             # Hybrid retrieval (semantic + keyword)
-            top_chunks = hybrid_retrieve(
+            candidate_chunks = hybrid_retrieve(
                 query=prompt,
                 query_emb=q_emb,
                 faiss_index=faiss_index,
                 bm25=bm25,
                 chunks=chunks,
-                k_final=5,
-                k_semantic=10,
-                k_keyword=10
-            )
+                k_final=10,
+                k_semantic=12,
+                k_keyword=12
+        )
+            top_chunks = rerank(prompt, candidate_chunks, top_k=5)
 
             if st.session_state.stop:
                 st.stop()
@@ -176,7 +181,10 @@ if prompt:
             # show sources
             st.subheader("Sources")
             for s in top_chunks:
-                with st.expander(f"{s['source']} | p.{s['page_num']} | chunk {s['chunk_id']}"):
+                
+                with st.expander(
+                    f"{s['source']} | page {s['page_num']} | chunk {s['chunk_id']} | score {round(s.get('rerank_score',0),3)}"
+            ):
                     st.write(s["text"])
 
             st.subheader("Grounding check")

@@ -7,4 +7,5 @@ pypdf
 tqdm
 numpy
 tqdm
-rank-bm25
+rank-bm25   
+sentence-transformers
