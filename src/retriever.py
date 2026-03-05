@@ -5,9 +5,6 @@ def retrieve(query_embedding, index, chunks, k=3):
     results = []
 
     for i in indices[0]:
-        results.append({
-            "chunk_id": i,
-            "text": chunks[i]
-        })
+        results.append(chunks[i])
 
     return results

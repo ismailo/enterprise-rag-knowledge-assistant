@@ -11,7 +11,14 @@ docs = load_documents("data/sample_docs")
 chunks = []
 
 for doc in docs:
-    chunks.extend(chunk_text(doc["text"]))
+    text_chunks = chunk_text(doc["text"])
+
+    for i, chunk in enumerate(text_chunks):
+        chunks.append({
+            "text": chunk,
+            "source": doc["source"],
+            "chunk_id": i
+        })
 
 embeddings = embed_chunks(chunks)
 
@@ -25,10 +32,13 @@ while True:
         break
 
     query_vector = embed_query(query)
-
     context_chunks = retrieve(query_vector, index, chunks)
-
     answer = generate_answer(query, context_chunks)
 
     print("\nAnswer:")
     print(answer)
+
+    print("\nSources:")
+
+    for chunk in context_chunks:
+        print(f"Chunk {chunk['chunk_id']}")
