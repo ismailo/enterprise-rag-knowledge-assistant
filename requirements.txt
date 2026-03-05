@@ -6,4 +6,5 @@ streamlit
 pypdf
 tqdm
 numpy
-
+tqdm
+rank-bm25
